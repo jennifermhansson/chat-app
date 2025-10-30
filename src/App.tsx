@@ -5,9 +5,11 @@ import { io } from "socket.io-client";
 // Anslut till servern
 const socket = io("ws://10.100.2.139:3001");
 
+  type ChatMessage = { sender: string; message: string };
+
 function App() {
   const [connected, setConnected] = useState(false);
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [name, setName] = useState("");
   const [input, setInput] = useState("");
 
@@ -16,10 +18,9 @@ function App() {
   useEffect(() => {
     socket.on("connect", () => setConnected(true));
     socket.on("disconnect", () => setConnected(false));
-
     socket.on("chat_room", (data) => {
       try {
-        const parsed = JSON.parse(data);
+        const parsed = JSON.parse(data) as ChatMessage;
         setMessages((prev) => [...prev, parsed]);
       } catch {
         console.error("Failed to parse message", data);
@@ -36,27 +37,25 @@ function App() {
   const sendMessage = () => {
     if (!input.trim() || !name.trim()) return;
 
-    const message = {
-      sender: name,
-      message: input,
-    };
+    const msg: ChatMessage = {
+    sender: name,
+    message: input,
+    } 
 
-    socket.emit("chat_room", JSON.stringify(message));
+    const stringifiedMsg = JSON.stringify(msg)
+
+    socket.emit("chat_room", stringifiedMsg);
+
+    setMessages((prev) => [...prev, msg]);
+
     setInput(""); // töm inputfältet efter skickat
-  };
+  }
 
+  
   return (
     <div className="chat-container">
       <h2>Realtime Chat</h2>
       <p>{connectionStatus}</p>
-
-      <div className="chat-box">
-        {messages.map((m, index) => (
-          <div key={index} className="message">
-            <strong>{m.sender}:</strong> {m.message}
-          </div>
-        ))}
-      </div>
 
       <div className="inputs">
         <input
@@ -71,10 +70,18 @@ function App() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
         />
+      <div className="chat-box">
+        {messages.map((msg, index) => (
+          <div key={index} className="message">
+            <strong>{msg.sender}:</strong> {msg.message}
+          </div>
+        ))}
+      </div>
         <button onClick={sendMessage}>Skicka</button>
       </div>
     </div>
   );
 }
+
 
 export default App;
