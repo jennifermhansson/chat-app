@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import "./App.css";
 import { io } from "socket.io-client";
 
@@ -12,8 +12,25 @@ function App() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [name, setName] = useState("");
   const [input, setInput] = useState("");
-
+  const [isNearBottom, setIsNearBottom] = useState(true);
+  const chatFeedRef = useRef<null | HTMLDivElement>(null);
+  const chatFeedEndRef = useRef<null | HTMLDivElement>(null);
   const connectionStatus = connected ? "✅ Connected" : "❌ Disconnected";
+
+  const handleScroll = () => {
+    const chatFeed = chatFeedRef.current;
+    if (!chatFeed) return;
+
+    const distanceFromBottom =
+      chatFeed.scrollHeight - chatFeed.scrollTop - chatFeed.clientHeight;
+    setIsNearBottom(distanceFromBottom < 50);
+  };
+
+  useEffect(() => {
+    if (isNearBottom) {
+      chatFeedEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, isNearBottom]);
 
   useEffect(() => {
     socket.on("connect", () => setConnected(true));
@@ -42,34 +59,36 @@ function App() {
       message: input,
     };
 
-    const stringifiedMsg = JSON.stringify(msg);
-
-    socket.emit("chat_room", stringifiedMsg);
-
+    socket.emit("chat_room", JSON.stringify(msg));
     setMessages((prev) => [...prev, msg]);
-
-    setInput(""); // töm inputfältet efter skickat
+    setInput("");
   };
 
   return (
     <div className="chat-container">
-      <h2>Realtime Chat</h2>
-      <p>{connectionStatus}</p>
-      <div className="chat-box">
+      <div className="chat-header">
+        <h2>Realtime Chat</h2>
+        <p>{connectionStatus}</p>
+      </div>
+      <div ref={chatFeedRef} className="chat-feed" onScroll={handleScroll}>
         {messages.map((msg, index) => (
-          <div key={index} className="message">
-            <strong>{msg.sender}:&nbsp;</strong>{msg.message}
+          <div key={index} className="message-container">
+            <span className="message-sender">{msg.sender}</span>
+            <span className="message-text">{msg.message}</span>
           </div>
         ))}
+        <div ref={chatFeedEndRef} />
       </div>
-      <form onSubmit={(e) => e.preventDefault()}>
+      <form className="message-form" onSubmit={(e) => e.preventDefault()}>
         <input
+          className="name-input"
           type="text"
           placeholder="Ditt namn"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
         <input
+          className="message-input"
           type="text"
           placeholder="Skriv ett meddelande..."
           value={input}
