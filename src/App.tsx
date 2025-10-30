@@ -5,7 +5,7 @@ import { io } from "socket.io-client";
 // Anslut till servern
 const socket = io("ws://10.100.2.139:3001");
 
-  type ChatMessage = { sender: string; message: string };
+type ChatMessage = { sender: string; message: string };
 
 function App() {
   const [connected, setConnected] = useState(false);
@@ -38,26 +38,31 @@ function App() {
     if (!input.trim() || !name.trim()) return;
 
     const msg: ChatMessage = {
-    sender: name,
-    message: input,
-    } 
+      sender: name,
+      message: input,
+    };
 
-    const stringifiedMsg = JSON.stringify(msg)
+    const stringifiedMsg = JSON.stringify(msg);
 
     socket.emit("chat_room", stringifiedMsg);
 
     setMessages((prev) => [...prev, msg]);
 
     setInput(""); // töm inputfältet efter skickat
-  }
+  };
 
-  
   return (
     <div className="chat-container">
       <h2>Realtime Chat</h2>
       <p>{connectionStatus}</p>
-
-      <div className="inputs">
+      <div className="chat-box">
+        {messages.map((msg, index) => (
+          <div key={index} className="message">
+            <strong>{msg.sender}:&nbsp;</strong>{msg.message}
+          </div>
+        ))}
+      </div>
+      <form onSubmit={(e) => e.preventDefault()}>
         <input
           type="text"
           placeholder="Ditt namn"
@@ -70,18 +75,10 @@ function App() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
         />
-      <div className="chat-box">
-        {messages.map((msg, index) => (
-          <div key={index} className="message">
-            <strong>{msg.sender}:</strong> {msg.message}
-          </div>
-        ))}
-      </div>
         <button onClick={sendMessage}>Skicka</button>
-      </div>
+      </form>
     </div>
   );
 }
-
 
 export default App;
