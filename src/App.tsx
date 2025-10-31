@@ -16,6 +16,7 @@ function App() {
   const chatFeedRef = useRef<null | HTMLDivElement>(null);
   const chatFeedEndRef = useRef<null | HTMLDivElement>(null);
   const connectionStatus = connected ? "✅ Connected" : "❌ Disconnected";
+  // const displayUserStatus = () => (connected ? " 🟢" : " 🔴");
 
   const handleScroll = () => {
     const chatFeed = chatFeedRef.current;
@@ -65,30 +66,30 @@ function App() {
   };
 
   return (
-    <div className="chat-container">
-      <div className="chat-header">
+    <div className="chat">
+      <div className="chat__header">
         <h2>Realtime Chat</h2>
         <p>{connectionStatus}</p>
       </div>
-      <div ref={chatFeedRef} className="chat-feed" onScroll={handleScroll}>
+      <div ref={chatFeedRef} className="chat__feed" onScroll={handleScroll}>
         {messages.map((msg, index) => (
-          <div key={index} className="message-container">
-            <span className="message-sender">{msg.sender}</span>
-            <span className="message-text">{msg.message}</span>
+          <div key={index} className="chat__feed__message">
+            <span className="chat__feed__message__sender">{msg.sender}</span>
+            <span className="chat__feed__message__content">{msg.message}</span>
           </div>
         ))}
         <div ref={chatFeedEndRef} />
       </div>
-      <form className="message-form" onSubmit={(e) => e.preventDefault()}>
+      <form className="chat__form" onSubmit={(e) => e.preventDefault()}>
         <input
-          className="name-input"
+          className="chat__form__name-input"
           type="text"
           placeholder="Ditt namn"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
         <input
-          className="message-input"
+          className="chat__form__message-input"
           type="text"
           placeholder="Skriv ett meddelande..."
           value={input}
