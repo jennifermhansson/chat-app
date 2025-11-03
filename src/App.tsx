@@ -2,15 +2,14 @@ import { useEffect, useState, useRef } from "react";
 import "./App.css";
 import { io } from "socket.io-client";
 
-// Anslut till servern
 const socket = io("wss://api.leetcode.se", {
   path: "/fos25",
 });
 
-type ChatMessage = { 
-  sender: string; 
-  message: string; 
-  time: string; 
+type ChatMessage = {
+  sender: string;
+  message: string;
+  time: string;
 };
 
 function App() {
@@ -19,24 +18,38 @@ function App() {
   const [name, setName] = useState("");
   const [input, setInput] = useState("");
   const [isNearBottom, setIsNearBottom] = useState(true);
-  const chatFeedRef = useRef<null | HTMLDivElement>(null);
-  const chatFeedEndRef = useRef<null | HTMLDivElement>(null);
+  const chatFeedRef = useRef<HTMLDivElement | null>(null);
+  const chatFeedEndRef = useRef<HTMLDivElement | null>(null);
 
   const connectionStatus = connected ? "✅ Connected" : "❌ Disconnected";
 
-  // Ladda historik från localStorage vid start
+  // Hämta namn vid start från local storage
+useEffect(() => {
+  const savedName = localStorage.getItem("chatName");
+  if (savedName) {
+    setName(savedName);
+  }
+}, []);
+
+// Spara namnet i local storage 
+useEffect(() => {
+  if (name.trim() !== "") {
+    localStorage.setItem("chatName", name);
+  }
+}, [name]);
+
+
+  // Ladda meddelanden från localStorage
   useEffect(() => {
-    const savedMessages = localStorage.getItem("chatMessages");
-    if (savedMessages) {
+    const saved = localStorage.getItem("chatMessages");
+    if (saved) {
       try {
-        setMessages(JSON.parse(savedMessages));
-      } catch {
-        console.error("Kunde inte ladda meddelanden från localStorage");
-      }
+        setMessages(JSON.parse(saved));
+      } catch {}
     }
   }, []);
 
-  // Spara till localStorage varje gång messages ändras
+  // Spara meddelandet i localStorage
   useEffect(() => {
     if (messages.length > 0) {
       localStorage.setItem("chatMessages", JSON.stringify(messages));
@@ -50,16 +63,15 @@ function App() {
     }
   }, [messages, isNearBottom]);
 
-  // Kolla om användaren är nära botten – annars scrolla inte automatiskt
   const handleScroll = () => {
     const chatFeed = chatFeedRef.current;
     if (!chatFeed) return;
-    const distanceFromBottom =
+    const distance =
       chatFeed.scrollHeight - chatFeed.scrollTop - chatFeed.clientHeight;
-    setIsNearBottom(distanceFromBottom < 50);
+    setIsNearBottom(distance < 50);
   };
 
-  // Hantera sockets (servermeddelanden mm)
+  // Socket.io – ta emot meddelanden
   useEffect(() => {
     socket.on("connect", () => setConnected(true));
     socket.on("disconnect", () => setConnected(false));
@@ -67,7 +79,6 @@ function App() {
     socket.on("chat_room", (data) => {
       let message = typeof data === "string" ? JSON.parse(data) : data;
 
-      // Om serverns meddelande saknar tid → ge den en timestamp
       if (!message.time) {
         message.time = new Date().toLocaleTimeString([], {
           hour: "2-digit",
@@ -85,6 +96,7 @@ function App() {
     };
   }, []);
 
+
   // Skicka meddelande
   const sendMessage = () => {
     if (!input.trim() || !name.trim()) return;
@@ -92,11 +104,14 @@ function App() {
     const msg: ChatMessage = {
       sender: name,
       message: input,
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      time: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
     };
 
-    socket.emit("chat_room", msg); // Skicka till servern
-    setMessages((prev) => [...prev, msg]); // Visa direkt i UI
+    socket.emit("chat_room", msg);
+    setMessages((prev) => [...prev, msg]);
     setInput("");
   };
 
@@ -107,14 +122,29 @@ function App() {
         <p>{connectionStatus}</p>
       </div>
 
-      <div ref={chatFeedRef} className="chat__feed" onScroll={handleScroll}>
-        {messages.map((msg, index) => (
-          <div key={index} className="chat__feed__message">
-            <span className="chat__feed__message__sender">{msg.sender}: </span>
-            <span className="chat__feed__message__content">{msg.message}</span>
-            <span className="chat__feed__message__time">{msg.time}</span>
-          </div>
-        ))}
+   <div ref={chatFeedRef} className="chat__feed" onScroll={handleScroll}>
+       {messages.map((msg, index) => {
+const isMyMessage = msg.sender.trim().toLowerCase() === name.trim().toLowerCase();
+  return (
+    <div
+      key={index}
+      className={`chat__feed__message ${
+        isMyMessage ? "my-message" : "other-message"
+      }`}
+    >
+      {/* Namn + tid över meddelandet */}
+      <div className="chat__feed__message__top">
+        <span className="chat__feed__message__sender">
+          {msg.sender}{" "}
+          <span className="chat__feed__message__time">• {msg.time}</span>
+        </span>
+      </div>
+
+      {/* Själva meddelandet i bubblan */}
+      <div className="chat__feed__message__content">{msg.message}</div>
+    </div>
+  );
+})}
         <div ref={chatFeedEndRef} />
       </div>
 
