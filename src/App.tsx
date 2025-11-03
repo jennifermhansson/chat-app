@@ -3,9 +3,15 @@ import "./App.css";
 import { io } from "socket.io-client";
 
 // Anslut till servern
-const socket = io("ws://10.100.2.139:3001");
+const socket = io("wss://api.leetcode.se", {
+  path: "/fos25",
+});
 
-type ChatMessage = { sender: string; message: string };
+type ChatMessage = { 
+  sender: string; 
+  message: string; 
+  time: string; 
+};
 
 function App() {
   const [connected, setConnected] = useState(false);
@@ -15,34 +21,61 @@ function App() {
   const [isNearBottom, setIsNearBottom] = useState(true);
   const chatFeedRef = useRef<null | HTMLDivElement>(null);
   const chatFeedEndRef = useRef<null | HTMLDivElement>(null);
+
   const connectionStatus = connected ? "✅ Connected" : "❌ Disconnected";
-  // const displayUserStatus = () => (connected ? " 🟢" : " 🔴");
 
-  const handleScroll = () => {
-    const chatFeed = chatFeedRef.current;
-    if (!chatFeed) return;
+  // Ladda historik från localStorage vid start
+  useEffect(() => {
+    const savedMessages = localStorage.getItem("chatMessages");
+    if (savedMessages) {
+      try {
+        setMessages(JSON.parse(savedMessages));
+      } catch {
+        console.error("Kunde inte ladda meddelanden från localStorage");
+      }
+    }
+  }, []);
 
-    const distanceFromBottom =
-      chatFeed.scrollHeight - chatFeed.scrollTop - chatFeed.clientHeight;
-    setIsNearBottom(distanceFromBottom < 50);
-  };
+  // Spara till localStorage varje gång messages ändras
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem("chatMessages", JSON.stringify(messages));
+    }
+  }, [messages]);
 
+  // Auto-scroll till senaste meddelandet
   useEffect(() => {
     if (isNearBottom) {
       chatFeedEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages, isNearBottom]);
 
+  // Kolla om användaren är nära botten – annars scrolla inte automatiskt
+  const handleScroll = () => {
+    const chatFeed = chatFeedRef.current;
+    if (!chatFeed) return;
+    const distanceFromBottom =
+      chatFeed.scrollHeight - chatFeed.scrollTop - chatFeed.clientHeight;
+    setIsNearBottom(distanceFromBottom < 50);
+  };
+
+  // Hantera sockets (servermeddelanden mm)
   useEffect(() => {
     socket.on("connect", () => setConnected(true));
     socket.on("disconnect", () => setConnected(false));
+
     socket.on("chat_room", (data) => {
-      try {
-        const parsed = JSON.parse(data) as ChatMessage;
-        setMessages((prev) => [...prev, parsed]);
-      } catch {
-        console.error("Failed to parse message", data);
+      let message = typeof data === "string" ? JSON.parse(data) : data;
+
+      // Om serverns meddelande saknar tid → ge den en timestamp
+      if (!message.time) {
+        message.time = new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
       }
+
+      setMessages((prev) => [...prev, message]);
     });
 
     return () => {
@@ -52,16 +85,18 @@ function App() {
     };
   }, []);
 
+  // Skicka meddelande
   const sendMessage = () => {
     if (!input.trim() || !name.trim()) return;
 
     const msg: ChatMessage = {
       sender: name,
       message: input,
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
-    socket.emit("chat_room", JSON.stringify(msg));
-    setMessages((prev) => [...prev, msg]);
+    socket.emit("chat_room", msg); // Skicka till servern
+    setMessages((prev) => [...prev, msg]); // Visa direkt i UI
     setInput("");
   };
 
@@ -71,15 +106,18 @@ function App() {
         <h2>Realtime Chat</h2>
         <p>{connectionStatus}</p>
       </div>
+
       <div ref={chatFeedRef} className="chat__feed" onScroll={handleScroll}>
         {messages.map((msg, index) => (
           <div key={index} className="chat__feed__message">
-            <span className="chat__feed__message__sender">{msg.sender}</span>
+            <span className="chat__feed__message__sender">{msg.sender}: </span>
             <span className="chat__feed__message__content">{msg.message}</span>
+            <span className="chat__feed__message__time">{msg.time}</span>
           </div>
         ))}
         <div ref={chatFeedEndRef} />
       </div>
+
       <form className="chat__form" onSubmit={(e) => e.preventDefault()}>
         <input
           className="chat__form__name-input"
