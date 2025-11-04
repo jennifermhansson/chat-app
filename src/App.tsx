@@ -1,16 +1,13 @@
 import { useEffect, useState, useRef } from "react";
 import "./App.css";
 import { io } from "socket.io-client";
+import ChatForm from "./components/ChatForm";
+import ChatFeed from "./components/ChatFeed";
+import type { ChatMessage } from "./types/chat";
 
 const socket = io("wss://api.leetcode.se", {
   path: "/fos25",
 });
-
-type ChatMessage = {
-  sender: string;
-  message: string;
-  time: string;
-};
 
 function App() {
   const [connected, setConnected] = useState(false);
@@ -24,20 +21,19 @@ function App() {
   const connectionStatus = connected ? "✅ Connected" : "❌ Disconnected";
 
   // Hämta namn vid start från local storage
-useEffect(() => {
-  const savedName = localStorage.getItem("chatName");
-  if (savedName) {
-    setName(savedName);
-  }
-}, []);
+  useEffect(() => {
+    const savedName = localStorage.getItem("chatName");
+    if (savedName) {
+      setName(savedName);
+    }
+  }, []);
 
-// Spara namnet i local storage 
-useEffect(() => {
-  if (name.trim() !== "") {
-    localStorage.setItem("chatName", name);
-  }
-}, [name]);
-
+  // Spara namnet i local storage
+  useEffect(() => {
+    if (name.trim() !== "") {
+      localStorage.setItem("chatName", name);
+    }
+  }, [name]);
 
   // Ladda meddelanden från localStorage
   useEffect(() => {
@@ -96,7 +92,6 @@ useEffect(() => {
     };
   }, []);
 
-
   // Skicka meddelande
   const sendMessage = () => {
     if (!input.trim() || !name.trim()) return;
@@ -122,49 +117,21 @@ useEffect(() => {
         <p>{connectionStatus}</p>
       </div>
 
-   <div ref={chatFeedRef} className="chat__feed" onScroll={handleScroll}>
-       {messages.map((msg, index) => {
-const isMyMessage = msg.sender.trim().toLowerCase() === name.trim().toLowerCase();
-  return (
-    <div
-      key={index}
-      className={`chat__feed__message ${
-        isMyMessage ? "my-message" : "other-message"
-      }`}
-    >
-      {/* Namn + tid över meddelandet */}
-      <div className="chat__feed__message__top">
-        <span className="chat__feed__message__sender">
-          {msg.sender}{" "}
-          <span className="chat__feed__message__time">• {msg.time}</span>
-        </span>
-      </div>
+      <ChatFeed
+        messages={messages}
+        name={name}
+        chatFeedRef={chatFeedRef}
+        chatFeedEndRef={chatFeedEndRef}
+        handleScroll={handleScroll}
+      />
 
-      {/* Själva meddelandet i bubblan */}
-      <div className="chat__feed__message__content">{msg.message}</div>
-    </div>
-  );
-})}
-        <div ref={chatFeedEndRef} />
-      </div>
-
-      <form className="chat__form" onSubmit={(e) => e.preventDefault()}>
-        <input
-          className="chat__form__name-input"
-          type="text"
-          placeholder="Ditt namn"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <input
-          className="chat__form__message-input"
-          type="text"
-          placeholder="Skriv ett meddelande..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-        />
-        <button onClick={sendMessage}>Skicka</button>
-      </form>
+      <ChatForm
+        name={name}
+        setName={setName}
+        input={input}
+        setInput={setInput}
+        sendMessage={sendMessage}
+      />
     </div>
   );
 }
