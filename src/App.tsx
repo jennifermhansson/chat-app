@@ -20,6 +20,13 @@ function App() {
 
   const connectionStatus = connected ? "✅ Connected" : "❌ Disconnected";
 
+  const userList = [
+    { user: "Philip", online: true },
+    { user: "Jennifer", online: true },
+    { user: "Ama", online: false },
+    { user: "Maksymilian", online: false },
+  ];
+
   // Hämta namn vid start från local storage
   useEffect(() => {
     const savedName = localStorage.getItem("chatName");
@@ -111,28 +118,44 @@ function App() {
   };
 
   return (
-    <div className="chat">
-      <div className="chat__header">
-        <h2>Realtime Chat</h2>
-        <p>{connectionStatus}</p>
+    <>
+      <div className="chat-top-container">
+        <div className="chat">
+          <div className="chat__header">
+            <h2>Realtime Chat</h2>
+            <p>{connectionStatus}</p>
+          </div>
+          <ChatFeed
+            messages={messages}
+            name={name}
+            chatFeedRef={chatFeedRef}
+            chatFeedEndRef={chatFeedEndRef}
+            handleScroll={handleScroll}
+          />
+          <ChatForm
+            name={name}
+            setName={setName}
+            input={input}
+            setInput={setInput}
+            sendMessage={sendMessage}
+          />
+        </div>
+        <div className="online-window">
+          <h2>Online status</h2>
+
+          <ul className="online-status">
+            {userList.map((user) => (
+              <li key={user.user}>
+                {user.user}{" "}
+                <span style={{ fontSize: "8px" }}>
+                  {user.online ? "🟢" : "🔴"}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
-
-      <ChatFeed
-        messages={messages}
-        name={name}
-        chatFeedRef={chatFeedRef}
-        chatFeedEndRef={chatFeedEndRef}
-        handleScroll={handleScroll}
-      />
-
-      <ChatForm
-        name={name}
-        setName={setName}
-        input={input}
-        setInput={setInput}
-        sendMessage={sendMessage}
-      />
-    </div>
+    </>
   );
 }
 
