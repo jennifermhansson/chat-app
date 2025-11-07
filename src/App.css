@@ -1,6 +1,157 @@
 #root {
+  /* border: solid 2px white; */
+  --main-bg-color: #1c222b;
+  --secondary-bg-color: #191d25;
+  --accent-color: #303244;
+  --text-color: #e8dcdc;
+  --text-accent-color: #aeaaaa;
+  box-sizing: border-box;
   max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  margin: 0;
+  padding: 0;
+  height: 100dvh;
+  width: 100dvw;
 }
+
+.online-status {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style-type: none;
+  font-weight: 600;
+  color: var(--text-accent-color)
+}
+
+.online-status li:hover {
+  color: var(--text-color);
+  cursor: pointer;
+  /* border: solid 1px #1c222b; */
+}
+
+.chat-top-container {
+  display: flex;
+  background-color: var(--main-bg-color);
+}
+.online-window {
+  height: 100%;
+  width: 100%;
+}
+
+.chat {
+  background-color: var(--main-bg-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+}
+
+.chat__header {
+  /* border: solid 2px purple; */
+  display: flex;
+  height: 8%;
+  justify-content: space-around;
+  width: 90%;
+}
+
+.chat__feed {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 90dvw;
+  max-width: 800px;
+  height: 80vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1rem;
+  background-color: var(--secondary-bg-color);
+  border-radius: 10px;
+}
+
+/* Bubblans grunddesign */
+.chat__feed__message {
+  max-width: 70%;
+  padding: 0.5rem 1rem;
+  border-radius: 15px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  word-wrap: break-word;
+}
+
+/* Dina egna meddelanden */
+.my-message {
+  align-self: flex-end;
+  background: #3a3f58;
+  border-radius: 15px 15px 0 15px;
+  text-align: right;
+}
+
+/* Andras meddelanden */
+.other-message {
+  align-self: flex-start;
+  background: #2a2d36;
+  border-radius: 15px 15px 15px 0;
+}
+
+/* Namn & tid ovanför bubblan */
+.chat__feed__message__top {
+  margin-bottom: 0.2rem;
+}
+
+.chat__feed__message__sender {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-accent-color);
+}
+
+.chat__feed__message__time {
+  font-size: 0.7rem;
+  margin-left: 0.3rem;
+  opacity: 0.7;
+}
+
+/* Själva texten */
+.chat__feed__message__content {
+  color: var(--text-color);
+  font-size: 1rem;
+}
+
+/* background-clip: text; */
+/* color: transparent; */
+/* text-shadow: 0px 0px 5px rgb(65, 25, 3); */
+/* filter: brightness(0.5); */
+/* filter: grayscale(100%); */
+
+.chat__form {
+  /* border: solid 2px blue; */
+  /* display: flex; */
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.chat__form__message-input,
+.chat__form__name-input {
+  /* border: solid 2px green; */
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  margin: 0.5rem;
+  font-size: 1rem;
+  transition: box-shadow 0.3s ease;
+  background-color: var(--secondary-bg-color);
+}
+
+/* .chat__form__message-input {
+  field-sizing: content;
+  min-width: 100px;
+  min-width: 100px;
+  overflow: auto;
+   */
+/* display: flex;
+  flex-direction: column;
+  text-wrap: wrap; */
+
+/* Eget meddelande (höger) */
